@@ -569,10 +569,12 @@ def generate_css(config):
     }}
 }}
 
-/* NOTE: Do NOT use named @page rules with content: none. Chrome 130+
-   inserts blank transitional pages when named pages have @content: none.
-   Only use the default @page below — accept that cover, copyright, TOC,
-   and chapter openers will show the book title as a running header. */
+/* ─── Page Setup ─── */
+/* Named pages cause blank transitional pages in Chrome 130+ when transitioning
+   between DIFFERENT named pages. Solution: cover, copyright, and back cover
+   all use @page cover (SAME named page) to avoid transitions.
+   All other pages use the default @page (no named page). */
+@page cover {{ margin: 0; @top-center {{ content: none; }} @bottom-center {{ content: none; }} }}
 
 /* ─── Base ─── */
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -595,17 +597,14 @@ body {{
 
 /* ─── Cover Page ─── */
 .cover-page {{
+    page: cover;
     position: relative;
-    margin: -{top_m}mm -{outer_m}mm -{bottom_m}mm -{inner_m}mm;
-    padding: {top_m}mm {outer_m}mm {bottom_m}mm {inner_m}mm;
-    min-height: calc(100vh + {top_m + bottom_m}mm);
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     min-height: 100vh;
     color: {colors['cover_text']};
-    overflow: hidden;
 }}
 
 .cover-bg {{
@@ -694,6 +693,8 @@ body {{
 
 /* ─── Copyright Page ─── */
 .copyright-page {{
+    page: cover;
+    padding: {top_m}mm {outer_m}mm {bottom_m}mm {inner_m}mm;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1047,17 +1048,14 @@ body {{
 
 /* ─── Back Cover ─── */
 .back-cover {{
+    page: cover;
     break-before: page;
     position: relative;
-    margin: -{top_m}mm -{outer_m}mm -{bottom_m}mm -{inner_m}mm;
-    padding: {top_m}mm {outer_m}mm {bottom_m}mm {inner_m}mm;
-    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     color: {colors['cover_text']};
-    overflow: hidden;
 }}
 
 .back-cover-gradient {{
@@ -1363,9 +1361,12 @@ def generate_pdf(input_md, output_pdf, config):
         page.pdf(
             path=output_pdf,
             format=page_size,
-            # Set margins at Playwright level as fallback (Paged.js handles CSS @page)
-            margin={"top": f"{top_m}mm", "bottom": f"{bottom_m}mm", 
-                    "left": f"{inner_m}mm", "right": f"{outer_m}mm"},
+            # CRITICAL: Set Playwright margins to 0. CSS @page handles margins.
+            # Setting margins here ADDS to CSS @page margins, creating white
+            # borders that can't be overridden — the root cause of covers
+            # and back covers not being full-bleed.
+            margin={"top": "0mm", "bottom": "0mm",
+                    "left": "0mm", "right": "0mm"},
             print_background=True,
             prefer_css_page_size=True,
         )

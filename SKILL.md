@@ -299,9 +299,8 @@ date: 2026-05-17
 ### 写作流程踩坑
 - ❌ 不要跳过 BOOK_SUMMARY.md 更新 → 上下文断裂、章节脱节
 - ✅ 单次会话可写完整本书（12章已验证可行）— 前提是 OUTLINE.md 经用户批准、全书叙事一致，且写完后立即更新 BOOK_SUMMARY.md
-- ❌ 不要一次性写多章且不更新 BOOK_SUMMARY.md → 上下文断裂
-- ❌ 不要跳过 Phase 2 研究 → 没有参考文献支撑的内容缺乏深度
-- ❌ 不要跳过 Phase 2 研究 → 没有参考文献支撑的内容缺乏深度
+- ❌ 不要一次性写多章且不更新 BOOK_SUMMARY.md → 上下文断裂  
+*但整书一揽子写作是可行的：12章89,000字已验证 —前提是 OUTLINE.md 经用户批准、全书叙事框架一致、写完后立即更新 BOOK_SUMMARY.md*
 - ❌ 不要跳过 Phase 4 审校 → 术语混乱、引用缺失、排版错漏
 - ❌ 不要写了工具（press-draft --research）但不去实际执行 → 研究阶段不是可选项，是必须步骤
 - ✅ 一章一次会话，写完立即更新 BOOK_SUMMARY.md
@@ -329,8 +328,6 @@ date: 2026-05-17
 - ❌ 不要在扉页显示任何章节编号 → 用户明确要求章节扉页不显示"第一章""第1章"等字样。所有章节（包括前言和正文章节）仅在目录中编号。`generate_chapter_opener` 不应输出任何章节号，只显示标题。`opener-number` CSS 类已废弃
 - ❌ 不要让 @top-center 页眉文字离底部太远 → `padding-bottom` 用 0.5mm（不是 2mm），加 `vertical-align: bottom` 让文字靠底部对齐
 - ❌ 不要用 Paged.js 的 `string-set` 做 running headers → Chrome 原生 @page 只支持静态 `content` 和 `counter(page)`，不支持 `string()` 运行元素。running header 直接用书名静态文本
-- ❌ 不要使用 `@page xxx` 命名页规则 + `content: none` → Chrome 130+ 在命名页过渡时插入空白中间页。修复：**不使用任何 `@page xxx` 命名页规则**，只用默认 `@page`
-- ❌ 不要在 `.cover-page` 上同时用 `min-height: 100vh` + `break-after: page` → `min-height: 100vh` 已填满整页，再加 `break-after: page` 会让 Chrome 生成一张空白过渡页。修复：去掉 cover 的 `break-after: page`，保留 `min-height: 100vh` 自然换页
 - ❌ 不要用 `@page xxx` 命名页规则 + `content: none` → Chrome 130+ 在命名页过渡时插入空白中间页。修复：**不使用任何 `@page xxx` 命名页规则**，只用默认 `@page`，接受封面和扉页显示书眉和页码。不要用 `page: xxx` CSS 属性，也不要定义任何 `@page xxx` CSS 规则
 - ✅ **封面全幅方案**：不用命名页，用负边距 + padding 实现全幅溢出效果：
   ```css
@@ -388,6 +385,7 @@ date: 2026-05-17
 
 - 已有案例：`ai-agent-handbook`（55,000字，10章46小节，已完成初稿+PDF）
 - 已有案例：`knowledge-flywheel-book`（终稿+PDF）
+- 已有案例：`ai-leader-path`（89,000字，12章+前言+附录，已于 2026-05-18 单次会话完成全流程：规划→写作→合并→雾霁蓝PDF输出，99页，0空白页）
 - 封面模版：`cover-templates/`
 - BookSmith-Den：`~/Desktop/Sloth-BookSmith-Den/`
 - Lovstudio workflow 来源：`uvx lovstudio-skill-helper decrypt write-professional-book`
