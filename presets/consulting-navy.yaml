@@ -1,0 +1,47 @@
+name: "Consulting Navy · 咨询深蓝"
+description: "纯白底色，海军蓝强调。适合商业报告、白皮书、战略提案。"
+page_size: "A4"
+colors:
+  page_bg: "#FFFFFF"
+  text: "#1E2A3A"
+  text_faded: "#5A6A7A"
+  accent: "#1B3A5C"
+  accent_light: "#2C5282"
+  border: "#D0D8E0"
+  code_bg: "#F0F4F8"
+  table_header: "#1B3A5C"
+  table_header_text: "#FFFFFF"
+  table_alt_row: "#F5F8FC"
+  blockquote_border: "#1B3A5C"
+  link: "#2C5282"
+  sidebar_bg: "#EBF0F8"
+  cover_gradient_start: "#0A1628"
+  cover_gradient_end: "#1B3A5C"
+  cover_accent: "#6B93D6"
+  cover_text: "#FFFFFF"
+fonts:
+  heading: "'PingFang SC', 'Hiragino Sans GB', 'Inter', sans-serif"
+  body: "'PingFang SC', 'Inter', sans-serif"
+  cjk: "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+  cjk_bold: "'PingFang SC', 'STHeiti', 'SimHei', sans-serif"
+  kai: "'Kaiti SC', 'STKaiti', serif"
+  mono: "'Menlo', 'Consolas', 'Courier New', monospace"
+  latin: "'Inter', 'SF Pro Text', 'Segoe UI', sans-serif"
+sizes:
+  cover_title: 38
+  chapter_title: 24
+  h1: 16
+  h2: 13.5
+  h3: 11.5
+  body: 10.5
+  code: 8.5
+  footnote: 8.5
+page_margins:
+  top: 22
+  bottom: 22
+  inner: 22
+  outer: 18
+line_height: 1.65
+first_line_indent: 0
+paragraph_spacing: 0.5em
+drop_cap: false

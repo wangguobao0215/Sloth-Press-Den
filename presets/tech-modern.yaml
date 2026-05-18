@@ -1,0 +1,47 @@
+name: "Tech Modern · 科技现代"
+description: "纯白底色，品牌蓝强调。适合技术书籍、开发者手册、API文档。"
+page_size: "A4"
+colors:
+  page_bg: "#FFFFFF"
+  text: "#1A1A2E"
+  text_faded: "#666680"
+  accent: "#2563EB"
+  accent_light: "#3B82F6"
+  border: "#E2E8F0"
+  code_bg: "#F1F5F9"
+  table_header: "#1E293B"
+  table_header_text: "#FFFFFF"
+  table_alt_row: "#F8FAFC"
+  blockquote_border: "#2563EB"
+  link: "#2563EB"
+  sidebar_bg: "#F0F4FF"
+  cover_gradient_start: "#0F172A"
+  cover_gradient_end: "#1E3A5F"
+  cover_accent: "#60A5FA"
+  cover_text: "#FFFFFF"
+fonts:
+  heading: "'PingFang SC', 'Hiragino Sans GB', 'Inter', 'SF Pro Display', sans-serif"
+  body: "'PingFang SC', 'Inter', 'SF Pro Text', sans-serif"
+  cjk: "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+  cjk_bold: "'PingFang SC', 'STHeiti', 'SimHei', sans-serif"
+  kai: "'Kaiti SC', 'STKaiti', serif"
+  mono: "'JetBrains Mono', 'Menlo', 'Fira Code', monospace"
+  latin: "'Inter', 'SF Pro Text', 'Segoe UI', sans-serif"
+sizes:
+  cover_title: 40
+  chapter_title: 26
+  h1: 17
+  h2: 14
+  h3: 12
+  body: 10.5
+  code: 9
+  footnote: 8.5
+page_margins:
+  top: 22
+  bottom: 22
+  inner: 20
+  outer: 16
+line_height: 1.7
+first_line_indent: 0
+paragraph_spacing: 0.6em
+drop_cap: false

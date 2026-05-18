@@ -1,0 +1,47 @@
+name: "Publishing Classic · 经典出版"
+description: "暖纸底色，墨黑正文，深红点缀。适合文学、社科、商业书籍。"
+page_size: "A5"
+colors:
+  page_bg: "#FEFCF6"
+  text: "#2D2D2D"
+  text_faded: "#666666"
+  accent: "#8B1A1A"
+  accent_light: "#B22222"
+  border: "#D4C5B2"
+  code_bg: "#F5F0E8"
+  table_header: "#8B1A1A"
+  table_header_text: "#FFFFFF"
+  table_alt_row: "#F8F4EE"
+  blockquote_border: "#8B1A1A"
+  link: "#1E3A5F"
+  sidebar_bg: "#F5F2ED"
+  cover_gradient_start: "#2C1810"
+  cover_gradient_end: "#5C3A28"
+  cover_accent: "#C4956A"
+  cover_text: "#FEFCF6"
+fonts:
+  heading: "'PingFang SC', 'Hiragino Sans GB', 'STZhongsong', 'SimHei', sans-serif"
+  body: "'Songti SC', 'STSong', 'SimSun', serif"
+  cjk: "'Songti SC', 'STSong', 'SimSun', serif"
+  cjk_bold: "'PingFang SC', 'STHeiti', 'SimHei', sans-serif"
+  kai: "'Kaiti SC', 'STKaiti', 'KaiTi', serif"
+  mono: "'Menlo', 'Monaco', 'Courier New', monospace"
+  latin: "'Georgia', 'Times New Roman', serif"
+sizes:
+  cover_title: 42
+  chapter_title: 28
+  h1: 18
+  h2: 15
+  h3: 13
+  body: 11
+  code: 9
+  footnote: 9
+page_margins:
+  top: 25
+  bottom: 25
+  inner: 22
+  outer: 18
+line_height: 1.75
+first_line_indent: 2em
+paragraph_spacing: 0.5em
+drop_cap: false

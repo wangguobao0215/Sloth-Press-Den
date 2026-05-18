@@ -1,0 +1,47 @@
+name: "Mist Blue · 雾霁蓝"
+description: "雾霁蓝主色调，暖金点缀。适合商业书籍、品牌内容。树懒老K品牌色系。苹方字体。"
+page_size: "A5"
+colors:
+  page_bg: "#F7F9FC"
+  text: "#2C3E50"
+  text_faded: "#5A6B7F"
+  accent: "#5B9BC8"
+  accent_light: "#7BB8E0"
+  border: "#B4CDE1"
+  code_bg: "#EDF2F7"
+  table_header: "#3A4E66"
+  table_header_text: "#FFFFFF"
+  table_alt_row: "#F0F5FA"
+  blockquote_border: "#5B9BC8"
+  link: "#3A4E66"
+  sidebar_bg: "#EEF4FA"
+  cover_gradient_start: "#1A2D3D"
+  cover_gradient_end: "#3A4E66"
+  cover_accent: "#C8B99B"
+  cover_text: "#F7F9FC"
+fonts:
+  heading: "'PingFang SC', 'Hiragino Sans GB', 'STZhongsong', 'SimHei', sans-serif"
+  body: "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+  cjk: "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+  cjk_bold: "'PingFang SC', 'STHeiti', 'SimHei', sans-serif"
+  kai: "'Kaiti SC', 'STKaiti', 'KaiTi', serif"
+  mono: "'Menlo', 'Monaco', 'Courier New', monospace"
+  latin: "'Georgia', 'Times New Roman', serif"
+sizes:
+  cover_title: 36
+  chapter_title: 24
+  h1: 16
+  h2: 13.5
+  h3: 12
+  body: 11
+  code: 9
+  footnote: 9
+page_margins:
+  top: 22
+  bottom: 22
+  inner: 20
+  outer: 16
+line_height: 1.75
+first_line_indent: 2em
+paragraph_spacing: 0.5em
+drop_cap: false

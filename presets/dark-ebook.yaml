@@ -1,0 +1,47 @@
+name: "Dark Ebook · 深色电子书"
+description: "深灰底色，琥珀色强调。适合夜间阅读、电子墨水设备。"
+page_size: "A5"
+colors:
+  page_bg: "#1A1D23"
+  text: "#D4D4D8"
+  text_faded: "#8A8A92"
+  accent: "#D4956A"
+  accent_light: "#E8B88A"
+  border: "#3A3D45"
+  code_bg: "#252830"
+  table_header: "#2D3038"
+  table_header_text: "#D4D4D8"
+  table_alt_row: "#22252D"
+  blockquote_border: "#D4956A"
+  link: "#8AB4F8"
+  sidebar_bg: "#252830"
+  cover_gradient_start: "#0D0D0D"
+  cover_gradient_end: "#2A2A2A"
+  cover_accent: "#D4956A"
+  cover_text: "#E8E8E8"
+fonts:
+  heading: "'PingFang SC', 'Hiragino Sans GB', sans-serif"
+  body: "'Songti SC', 'STSong', serif"
+  cjk: "'Songti SC', 'STSong', serif"
+  cjk_bold: "'PingFang SC', 'STHeiti', sans-serif"
+  kai: "'Kaiti SC', 'STKaiti', serif"
+  mono: "'Menlo', 'Consolas', 'Courier New', monospace"
+  latin: "'Georgia', 'Palatino', serif"
+sizes:
+  cover_title: 40
+  chapter_title: 26
+  h1: 17
+  h2: 14
+  h3: 12
+  body: 11
+  code: 9
+  footnote: 9
+page_margins:
+  top: 22
+  bottom: 22
+  inner: 18
+  outer: 14
+line_height: 1.8
+first_line_indent: 2em
+paragraph_spacing: 0.4em
+drop_cap: false

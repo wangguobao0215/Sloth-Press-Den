@@ -1,0 +1,23 @@
+# Sloth-Press-Den — 技能仓库
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp build artifacts
+_temp_book.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
