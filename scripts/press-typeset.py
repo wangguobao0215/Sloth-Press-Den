@@ -596,6 +596,9 @@ body {{
 /* ─── Cover Page ─── */
 .cover-page {{
     position: relative;
+    margin: -{top_m}mm -{outer_m}mm -{bottom_m}mm -{inner_m}mm;
+    padding: {top_m}mm {outer_m}mm {bottom_m}mm {inner_m}mm;
+    min-height: calc(100vh + {top_m + bottom_m}mm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -691,7 +694,6 @@ body {{
 
 /* ─── Copyright Page ─── */
 .copyright-page {{
-    break-after: page;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1047,6 +1049,9 @@ body {{
 .back-cover {{
     break-before: page;
     position: relative;
+    margin: -{top_m}mm -{outer_m}mm -{bottom_m}mm -{inner_m}mm;
+    padding: {top_m}mm {outer_m}mm {bottom_m}mm {inner_m}mm;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;

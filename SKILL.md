@@ -81,7 +81,7 @@ pip install PyMuPDF
 - 用 `clarify` 工具向用户确认书名、副标题、目标读者、章节数——不要假设你知道，即使之前讨论过
 - 如果用户说"从零开始"或"忽略现有材料"，必须用 `--init` 新建目录，绝不能迁移旧内容冒充"重新写"
 | **Phase 2: 研究** | press-draft --research | 章号 → refs.md（参考文献框架） |
-| **Phase 3: 写作** | 逐章写作（一次会话一章） | OUTLINE.md + BOOK_SUMMARY.md → 章节Markdown |
+| **Phase 3: 写作** | 逐章写作（一次会话一章或整本一次性，前提是OUTLINE已批准） | OUTLINE.md + BOOK_SUMMARY.md → 章节Markdown |
 | **Phase 4: 审校** | press-review --book-dir | 全书 → 术语/引用/排版检查报告 |
 | **Phase 5: 构建** | press-pipeline.sh + press-typeset | merged-manuscript.md → PDF/HTML/ePub/MOBI/AZW3 |
 
@@ -298,7 +298,9 @@ date: 2026-05-17
 
 ### 写作流程踩坑
 - ❌ 不要跳过 BOOK_SUMMARY.md 更新 → 上下文断裂、章节脱节
-- ❌ 不要一次性写多章 → 上下文窗口不够，质量暴跌
+- ✅ 单次会话可写完整本书（12章已验证可行）— 前提是 OUTLINE.md 经用户批准、全书叙事一致，且写完后立即更新 BOOK_SUMMARY.md
+- ❌ 不要一次性写多章且不更新 BOOK_SUMMARY.md → 上下文断裂
+- ❌ 不要跳过 Phase 2 研究 → 没有参考文献支撑的内容缺乏深度
 - ❌ 不要跳过 Phase 2 研究 → 没有参考文献支撑的内容缺乏深度
 - ❌ 不要跳过 Phase 4 审校 → 术语混乱、引用缺失、排版错漏
 - ❌ 不要写了工具（press-draft --research）但不去实际执行 → 研究阶段不是可选项，是必须步骤
@@ -329,7 +331,18 @@ date: 2026-05-17
 - ❌ 不要用 Paged.js 的 `string-set` 做 running headers → Chrome 原生 @page 只支持静态 `content` 和 `counter(page)`，不支持 `string()` 运行元素。running header 直接用书名静态文本
 - ❌ 不要使用 `@page xxx` 命名页规则 + `content: none` → Chrome 130+ 在命名页过渡时插入空白中间页。修复：**不使用任何 `@page xxx` 命名页规则**，只用默认 `@page`
 - ❌ 不要在 `.cover-page` 上同时用 `min-height: 100vh` + `break-after: page` → `min-height: 100vh` 已填满整页，再加 `break-after: page` 会让 Chrome 生成一张空白过渡页。修复：去掉 cover 的 `break-after: page`，保留 `min-height: 100vh` 自然换页
-- ✅ 当反复打补丁无法解决问题时，不要继续 patch，考虑从架构层面重写
+- ❌ 不要用 `@page xxx` 命名页规则 + `content: none` → Chrome 130+ 在命名页过渡时插入空白中间页。修复：**不使用任何 `@page xxx` 命名页规则**，只用默认 `@page`，接受封面和扉页显示书眉和页码。不要用 `page: xxx` CSS 属性，也不要定义任何 `@page xxx` CSS 规则
+- ✅ **封面全幅方案**：不用命名页，用负边距 + padding 实现全幅溢出效果：
+  ```css
+  .cover-page {
+      margin: -22mm;
+      padding: 22mm; 
+      min-height: calc(100vh + 44mm);
+  }
+  ```
+  背景延伸至纸张边缘，内容保持在原内容区域内。封底同理，但 `min-height: 100vh`（不加 44mm，避免 overflow）。
+- ✅ **版权页**不要 `break-after: page`，用 `min-height: 100vh` 自然占满一页
+- ✅ **封底**要用 `break-before: page` 确保独占一页，但 `min-height` 用 `100vh`（不加额外 margin 补偿）
 - ✅ Paged.js 适合需要 running headers、named page strings 的场景，但对 CJK 书籍排版稳定性不足，Chrome 原生打印更可靠
 - ✅ Chrome 原生 @page 支持：`size`、`margin`、named pages、`@bottom-center { counter(page) }`、`page-break-before/after/inside`、`target-counter()`、`@media print`
 - ✅ 代码块内 `# ` 开头的内容要用 `in_code_block` 状态跟踪过滤，否则被误解析为章节标题
@@ -382,3 +395,4 @@ date: 2026-05-17
 - 并行写书参考：`references/parallel-writing.md`（使用 delegate_task 批量写多章）
 - CJK 排版要点：`references/cjk-typography.md`（中文 PDF 排版的 CSS 坑与修复）
 - Chrome 原生打印方案：`references/chrome-print-cjk.md`（去掉 Paged.js 后的实测要点，含10项关键修复）
+- Chrome 空白页根因排查：`references/chrome-print-blank-pages.md`（`@page` 命名规则 + `content: none` 导致 Chrome 插入空白过渡页的完整测试矩阵与修复方案）

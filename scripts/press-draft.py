@@ -109,9 +109,11 @@ New terms:
         (ch_dir / "refs.md").write_text("# 参考文献\n\n", encoding="utf-8")
 
     # Step 5.5: Write SUMMARY.md for merge-book.py compatibility
+    # NOTE: Use section-01.md NOT README.md. merge-book.py skips README.md
+    # when it's a short placeholder without "# 第X章" heading.
     summary_lines = [f"# {title}", "", "[前言](src/foreword.md)", ""]
     for i in range(1, chapters + 1):
-        summary_lines.append(f"- [第{i}章 [标题]](src/chapter-{i:02d}/README.md)")
+        summary_lines.append(f"- [第{i}章 [标题]](src/chapter-{i:02d}/section-01.md)")
     (book_path / "src" / "SUMMARY.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
 
     # Step 6: Write book.toml for mdBook (optional)
@@ -134,7 +136,7 @@ smart_punctuation = true
 # Build PDF
 python3 scripts/press-typeset.py \\
     --input merged-manuscript.md \\
-    --preset publishing-classic \\
+    --preset mist-blue \\
     --output output/book.pdf
 """
     (book_path / "scripts" / "build-pdf.sh").write_text(build_sh, encoding="utf-8")
