@@ -182,7 +182,7 @@ def convert_md_to_html(md_text):
     return md.convert(md_text)
 
 
-def process_body_html(html, chapter_index=0):
+def process_body_html(html, chapter_index=0, output_dir=None):
     """Post-process HTML: figure/table numbering, sidebars, footnotes, cross-references."""
     # ── Cross-reference detection: 参见/参阅/参考/见 第X章 → clickable links
     def replace_crossref(m):
@@ -205,15 +205,24 @@ def process_body_html(html, chapter_index=0):
         nonlocal fig_counter
         fig_counter += 1
         tag = m.group(0)
-        src_match = re.search(r'src="([^"]+)"', tag)
+        img_match = re.search(r'<img[^>]+/>|<img[^>]+>', tag)
+        if not img_match:
+            return tag
+        img_tag = img_match.group(0)
+        src_match = re.search(r'src="([^"]+)"', img_tag)
         src = src_match.group(1) if src_match else ''
-        alt_match = re.search(r'alt="([^"]*)"', tag)
+        alt_match = re.search(r'alt="([^"]*)"', img_tag)
         alt = alt_match.group(1) if alt_match else ''
+        # Extract italic caption if present (from markdown *caption*)
+        cap_match = re.search(r'<em>([^<]*)</em>', tag)
+        caption = cap_match.group(1).strip().strip('—').strip('-').strip() if cap_match else ''
+        cap_text = caption if caption else alt
         return (
-            f'<figure><img src="{src}" alt="{alt}"/>'
-            f'<figcaption>\u56fe {chapter_index + 1}-{fig_counter}  {alt}</figcaption></figure>'
+            f'<figure><img src="{src}" alt="{alt}" style="max-height:140mm;width:auto;height:auto;"/>'
+            f'<figcaption>\u56fe {chapter_index + 1}-{fig_counter}  {cap_text}</figcaption></figure>'
         )
-    html = re.sub(r'<p>\s*<img\s+[^>]+/?>\s*</p>', replace_img_figure, html)
+    # Match <p> containing <img> (possibly followed by <em> caption)
+    html = re.sub(r'<p>\s*(<img[^>]+/>)\s*(?:<em>([^<]*)</em>)?\s*</p>', replace_img_figure, html)
 
     # ── Table numbering ──
     table_counter = 0
@@ -229,6 +238,15 @@ def process_body_html(html, chapter_index=0):
     html = re.sub(r'<table>.*?</table>', replace_table, html, flags=re.DOTALL)
 
     # ── Sidebar / callout detection (BookSmith pattern) ──
+    # Also inject QR code if sidebar contains 配套资源/二维码/扫码
+    qr_html = ''
+    if output_dir:
+        try:
+            qr_src = _ensure_asset(output_dir, "qrcode.jpg")
+            qr_html = f'<div class="sidebar-qr"><img src="{qr_src}" width="70" height="70" class="sidebar-qr-img" alt="公众号二维码"/><p class="sidebar-qr-text">扫码获取配套资源</p></div>'
+        except Exception:
+            qr_html = ''
+    
     def replace_blockquote(m):
         inner = m.group(1)
         match = re.search(r'<p><strong>([^<]+)</strong>[:：]?\s*(.*?)</p>', inner)
@@ -240,9 +258,19 @@ def process_body_html(html, chapter_index=0):
                 f'<p class="sidebar-title">{label}</p><p>{rest}</p>',
                 1
             )
+            # Inject QR code for resource sections, strip placeholder text
+            if '配套资源' in label or '二维码' in label or '扫码' in label:
+                cleaned = re.sub(r'<p>（此处放置[^<]*）</p>\s*', '', new_inner)
+                cleaned = re.sub(r'<p>扫码获取[^<]*</p>\s*', '', cleaned)
+                return f'<aside class="sidebar">{cleaned}{qr_html}</aside>'
             return f'<aside class="sidebar">{new_inner}</aside>'
+        # Fallback: standalone blockquote with QR placeholder text
+        if '此处放置' in inner:
+            cleaned = re.sub(r'<p>（此处放置[^<]*）</p>\s*', '', inner)
+            cleaned = re.sub(r'<p>扫码获取[^<]*</p>\s*', '', cleaned)
+            return f'<aside class="sidebar">{cleaned}{qr_html}</aside>'
         return m.group(0)
-
+    
     html = re.sub(r'<blockquote>(.*?)</blockquote>', replace_blockquote, html, flags=re.DOTALL)
 
     return html
@@ -250,9 +278,10 @@ def process_body_html(html, chapter_index=0):
 
 # ─── HTML Generators ─────────────────────────────────────────────────────
 def generate_cover_html(config, output_dir="."):
-    """Generate cover page HTML with avatar (centered) + title + subtitle.
+    """Generate cover page HTML with brand logo (centered) + title + subtitle + three QR codes at bottom.
     
     Styles: gradient (default), solid, academic
+    Three QR codes (website / WeChat / 公众号) sit at the bottom of the cover.
     """
     colors = config['colors']
     fonts = config['fonts']
@@ -266,19 +295,42 @@ def generate_cover_html(config, output_dir="."):
     subtitle_html = f'<p class="cover-subtitle">{subtitle}</p>' if subtitle else ''
     author_html = f'<p class="cover-author">{author}</p>' if author else ''
     
-    # Avatar image — copy to output dir and use absolute file:// path
-    avatar_src = _ensure_asset(output_dir, "sloth-avatar-round.png")
-    avatar_html = f'<img src="{avatar_src}" width="80" height="80" class="cover-avatar"/>'
+    # Brand logo (transparent) — centered
+    logo_src = _ensure_asset(output_dir, "logo-transparent.png")
+    logo_html = f'<img src="{logo_src}" width="100" height="100" class="cover-avatar"/>'
+
+    # Three QR codes at the bottom
+    qr_website = _ensure_asset(output_dir, "website_qr.png")
+    qr_wechat = _ensure_asset(output_dir, "wechat_qr.png")
+    qr_gzh = _ensure_asset(output_dir, "gongzhonghao_qr.png")
+    
+    qr_row = f'''<div class="cover-qr-row">
+      <div class="cover-qr-item">
+        <img src="{qr_website}" width="60" height="60" class="cover-qr-img"/>
+        <p class="cover-qr-label">个人网站</p>
+      </div>
+      <div class="cover-qr-item">
+        <img src="{qr_wechat}" width="60" height="60" class="cover-qr-img"/>
+        <p class="cover-qr-label">个人微信</p>
+      </div>
+      <div class="cover-qr-item">
+        <img src="{qr_gzh}" width="60" height="60" class="cover-qr-img"/>
+        <p class="cover-qr-label">公众号</p>
+      </div>
+    </div>'''
 
     if cover_style == 'solid':
         bg = f'background: {colors["cover_gradient_end"]};'
         return f'''<section class="cover-page">
   <div class="cover-bg" style="{bg}"></div>
-  {avatar_html}
-  <h1 class="cover-title">{title}</h1>
-  {subtitle_html}
-  <div class="cover-ornament"></div>
-  {author_html}
+  <div class="cover-content">
+    {logo_html}
+    <h1 class="cover-title">{title}</h1>
+    {subtitle_html}
+    <div class="cover-ornament"></div>
+    {author_html}
+  </div>
+  {qr_row}
 </section>'''
     
     elif cover_style == 'academic':
@@ -288,23 +340,25 @@ def generate_cover_html(config, output_dir="."):
   <div style="width: 60px; height: 3px; background: {colors['cover_accent']}; margin: 0 auto 2em;"></div>
   <h1 class="cover-title" style="font-size: {sizes['cover_title'] - 4}pt;">{title}</h1>
   {subtitle_html}
-  {avatar_html}
+  {logo_html}
   <div style="width: 40px; height: 1px; background: {colors['cover_accent']}; opacity: 0.4; margin: 2em auto;"></div>
   {author_html}
+  {qr_row}
 </section>'''
     
     else:
-        # gradient (default) — avatar centered, no publisher text
+        # gradient (default) — logo centered, three QR codes at bottom
         og = f"background: linear-gradient(135deg, {colors['cover_gradient_start']} 0%, {colors['cover_gradient_end']} 100%);"
         return f'''<section class="cover-page">
   <div class="cover-bg" style="{og}"></div>
   <div class="cover-content">
-    {avatar_html}
+    {logo_html}
     <h1 class="cover-title">{title}</h1>
     {subtitle_html}
     <div class="cover-ornament"></div>
     {author_html}
   </div>
+  {qr_row}
 </section>'''
 
 
@@ -376,26 +430,36 @@ def _ensure_asset(output_dir, filename):
 
 
 def generate_back_cover_html(config, output_dir):
-    """Generate back cover with avatar + QR code."""
+    """Generate back cover with brand logo + three QR codes (website / WeChat / 公众号)."""
     colors = config['colors']
     fonts = config['fonts']
     
-    avatar_src = _ensure_asset(output_dir, "sloth-avatar-round.png")
-    qr_src = _ensure_asset(output_dir, "qrcode.jpg")
+    logo_src = _ensure_asset(output_dir, "logo-transparent-large.png")
+    qr_website = _ensure_asset(output_dir, "website_qr.png")
+    qr_wechat = _ensure_asset(output_dir, "wechat_qr.png")
+    qr_gzh = _ensure_asset(output_dir, "gongzhonghao_qr.png")
     
     return f'''<section class="back-cover">
   <div class="back-cover-gradient" style="background: linear-gradient(135deg, {colors['cover_gradient_start']} 0%, {colors['cover_gradient_end']} 100%);"></div>
   <div class="back-cover-content">
-    <img src="{avatar_src}" width="100" height="100" class="back-avatar"/>
+    <img src="{logo_src}" width="100" height="100" class="back-avatar"/>
     <p class="back-name">树懒老K（拙一）</p>
     <p class="back-desc">30年企业服务经验 · 专注AI智能体与组织变革</p>
-    <div class="back-qr-row">
-      <img src="{qr_src}" width="100" height="100" class="back-qrcode"/>
-      <div class="back-qr-text">
-        <p>扫码关注公众号</p>
-        <p class="back-tagline">慢一点，深一度</p>
+    <div class="back-qr-grid">
+      <div class="back-qr-item">
+        <img src="{qr_website}" width="90" height="90" class="back-qrcode"/>
+        <p class="back-qr-label">个人网站</p>
+      </div>
+      <div class="back-qr-item">
+        <img src="{qr_wechat}" width="90" height="90" class="back-qrcode"/>
+        <p class="back-qr-label">个人微信</p>
+      </div>
+      <div class="back-qr-item">
+        <img src="{qr_gzh}" width="90" height="90" class="back-qrcode"/>
+        <p class="back-qr-label">公众号</p>
       </div>
     </div>
+    <p class="back-tagline">慢一点，深一度</p>
   </div>
 </section>'''
 
@@ -481,7 +545,7 @@ def generate_body_html(chapters, config, output_dir="."):
             marked_lines.append(line)
 
         chapter_html = convert_md_to_html('\n'.join(marked_lines))
-        chapter_html = process_body_html(chapter_html, chapter_index=i)
+        chapter_html = process_body_html(chapter_html, chapter_index=i, output_dir=output_dir)
 
         clean = re.sub(r'<div class="page-break"></div>', '', chapter_html)
         clean = re.sub(r'\s', '', clean)
@@ -689,6 +753,40 @@ body {{
     margin-top: 2.5em;
     color: {colors['cover_text']};
     opacity: 0.9;
+}}
+
+/* ─── Cover QR Codes (three at bottom) ─── */
+.cover-qr-row {{
+    position: absolute;
+    bottom: 25px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5em;
+    z-index: 20;
+}}
+
+.cover-qr-item {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}}
+
+.cover-qr-img {{
+    display: block;
+    border-radius: 4px;
+    border: 2px solid rgba(255,255,255,0.15);
+}}
+
+.cover-qr-label {{
+    font-size: 7pt;
+    color: {colors['cover_text']};
+    opacity: 0.6;
+    letter-spacing: 1px;
+    white-space: nowrap;
 }}
 
 /* ─── Copyright Page ─── */
@@ -1009,11 +1107,33 @@ body {{
     line-height: 1.6;
 }}
 
+/* ─── Sidebar ─── */
 .sidebar-title {{
     font-weight: 700;
     color: {colors['accent']};
     font-size: 10pt;
     margin-bottom: 0.3em;
+}}
+
+.sidebar-qr {{
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    margin-top: 1em;
+    padding-top: 0.8em;
+    border-top: 1px solid {colors['border']};
+}}
+
+.sidebar-qr-img {{
+    border-radius: 4px;
+}}
+
+.sidebar-qr-text {{
+    font-size: 8.5pt;
+    color: {colors['text_faded']};
+    font-style: normal;
+    margin: 0 !important;
+    text-indent: 0;
 }}
 
 /* ─── Figures ─── */
@@ -1023,9 +1143,13 @@ body {{
     page-break-inside: avoid;
 }}
 
+/* Constrain tall SVG figures to fit within one page — prevents cross-page truncation */
 .chapter-body figure img {{
-    max-width: 90%;
+    max-width: 85%;
+    max-height: 150mm;
+    width: auto;
     height: auto;
+    object-fit: contain;
 }}
 
 .chapter-body figcaption {{
@@ -1067,52 +1191,61 @@ body {{
     position: relative;
     z-index: 1;
     text-align: center;
-    max-width: 70%;
+    max-width: 75%;
 }}
 
 .back-avatar {{
     border-radius: 50%;
-    margin-bottom: 1em;
+    margin-bottom: 0.8em;
 }}
 
 .back-name {{
     font-family: {fonts['heading']};
     font-size: 16pt;
     font-weight: 600;
-    margin-bottom: 0.3em;
+    margin-bottom: 0.2em;
 }}
 
 .back-desc {{
-    font-size: 10pt;
+    font-size: 9pt;
     color: {colors['cover_accent']};
     opacity: 0.85;
-    margin-bottom: 2.5em;
+    margin-bottom: 2em;
 }}
 
-.back-qr-row {{
+/* Three QR codes in a horizontal grid */
+.back-qr-grid {{
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 1.5em;
-    margin-top: 1em;
+    align-items: flex-start;
+    gap: 2em;
+    margin-bottom: 2em;
+}}
+
+.back-qr-item {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }}
 
 .back-qrcode {{
-    border-radius: 8px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.15);
 }}
 
-.back-qr-text p {{
-    font-size: 10pt;
-    margin: 0;
-    text-indent: 0;
-    text-align: left;
+.back-qr-label {{
+    font-size: 8pt;
+    color: {colors['cover_text']};
+    opacity: 0.7;
+    letter-spacing: 1px;
 }}
 
 .back-tagline {{
     font-size: 9pt;
     font-style: italic;
     opacity: 0.7;
-    margin-top: 0.3em !important;
+    margin-top: 0.5em;
 }}
 .qr-footer {{
     margin-top: 2em;

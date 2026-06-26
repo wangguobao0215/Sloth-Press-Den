@@ -1,132 +1,76 @@
-# Chrome Native @print: Named Pages & Blank Page Debug
+# Chrome 130+ PDF 空白页 + 封面全幅 问题排查
 
-> Documented: 2026-05-18 | Chromium 130+ (Playwright)
+> 最后更新：2026-05-18 | 三轮完整测试迭代后确认的最终方案
 
-## Problem
+## 问题一：PDF 中出现空白页（p3 空白）
 
-Using `@page xxx { content: none; }` named-page rules in CSS causes Chrome to
-insert blank transitional pages between different named page contexts, and
-also between certain named→default page transitions.
+### 症状
+封面、版权页正常显示，但第3页是空白（只有页眉和页码）。
 
-## Symptom
+### 根因
+Chrome 130+ 的 CSS `@page` 命名页机制存在一个行为：当两个连续页使用 **不同的** `@page` 命名页规则（name pages）时，Chrome 会插入一张空白过渡页。
 
-PDF structure shows:
-```
-p1:  Cover
-p2:  BLANK (only page number)
-p3:  Copyright
-p4:  BLANK (only page number)
-p5:  TOC
-p6+: Content
-```
+### 测试矩阵（部分）
 
-## Root Cause (systematically proven)
+| @page 配置 | 封面 | 空白页 | 备注 |
+|---|---|---|---|
+| `@page cover { margin:0; @top-center:none; }` | 有 | 有 | 单独命名页 → 空白 |
+| `@page cover { @top-center:content:"BOOK"; }` | 无 | 无 | 有实际内容的命名页可用 |
+| `@page cover { }` (空) | 有 | 有 | 即使空的命名页也触发 |
+| `@page cover { margin:22mm; }` | 无 | 无 | 同名页→默认页过渡没问题 |
+| 无命名页，负边距 | 无 | 无 | 但封面有白边（Chrome裁剪） |
+| **封面+版权+封底共用 `page: cover`** | **无** | **无** | **最终工作方案** |
 
-A series of minimal HTML tests was run through Playwright Chromium,
-generating PDFs and checking each page for content vs. blank.
-
-### Test Matrix Results
-
-| Test | Named Pages | `break-after` on Cover | Result |
-|------|-------------|----------------------|--------|
-| No named pages, just `break-after` on cover | None | Yes | ⚠️ p2 blank |
-| No named pages, no `break-after` on cover | None | No | ✅ No blanks |
-| `@page cover { margin:0; @top-center:none; }` + `page:cover` class | Cover | Yes | ⚠️ blanks |
-| `@page cover { margin:0; @top-center:none; }` + `page:cover` class | Cover | No | ⚠️ blanks |
-| `@page cover { @top-center { content: "BOOK"; } }` (real text!) | Cover (with content) | Yes | ✅ No blanks |
-| `@page cover { @top-center { content: ""; } }` (empty string) | Cover | Yes | ⚠️ p2 blank |
-| `@page cover { }` (empty rule) | Cover (empty) | Yes | ⚠️ p2 blank |
-| No `@page` rule, just `page: cover` on class | Class-only | Yes | ✅ No blanks |
-| `@page copyright { @top-center:none; }` | Copyright | No | ⚠️ blanks at each transition |
-| Default `@page` only, no named rules | None | No | ✅ Perfect, no blanks |
-
-### Key Insight
-
-The blank page is caused by `content: none` (or empty `content: ""`) inside a
-named `@page` rule combined with the named page transition. Chrome 130+
-interprets `content: none` as "this page-margin box should not exist" and
-inserts a blank transitional page when switching to/from such a named page.
-
-Even an **empty** `@page cover { }` rule (no content directives at all) still
-triggers the blank page when a class uses `page: cover`. The safest approach
-is to simply not define any named `@page` CSS rules.
-
-### The `break-after: page` Interaction
-
-Separate from the named-page issue: putting both `min-height: 100vh` AND
-`break-after: page` on the cover element causes Chrome to produce an extra
-blank page. The cover already fills the full viewport naturally, so
-`break-after: page` triggers a redundant page break.
-
-**Fix**: Remove `break-after: page` from `.cover-page`. Keep `min-height: 100vh`.
-
-## Verified Working Setup
+### 最终修复方案
 
 ```css
-@page {
-    size: A5;
-    margin: 22mm;
-    @top-center { content: "Book Title"; ... }
-    @bottom-center { content: counter(page); ... }
-}
-
-/* Do NOT add @page cover, @page copyright, @page toc, @page chapter-opener */
-
-.cover-page {
-    /* NO page: cover */
-    /* NO break-after: page */
-    min-height: 100vh;
-    ...
-}
-
-.copyright-page {
-    break-after: page;
-    ...
-}
-
-.toc-page {
-    break-after: page;
-    ...
-}
-
-.chapter-opener {
-    break-before: page;
-    break-after: page;
-    ...
-}
-
-.back-cover {
-    break-before: page;
-    min-height: 100vh;
-    ...
-}
+/* solo命名页 → Chrome插空白页 */
+/* 封面+版权+封底同名页 → 无空白页 */
+@page cover { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
 ```
 
-**Trade-off**: Cover and chapter openers show the book title as a running
-header (inherited from the default `@page`). This is visually acceptable;
-blank pages are not.
+三个关键约束：
+1. 封面、版权页、封底 **都必须用 `page: cover`**（同名）→ Chrome 在相同命名页之间不插空白
+2. 版权页必须加 `padding`（`page: cover` 的 margin 为 0，内容会到边缘）
+3. `page.pdf()` 的 margin 参数必须设 `0mm`（否则叠加到 CSS @page 之上）
 
-## What NOT to Do
+## 问题二：封面不是全幅（有白边）
 
-- ❌ `@page cover { margin:0; @top-center: none; ... }` — blank transition pages
-- ❌ `@page copyright { @top-center: none; }` — blank pages at copyright→TOC→chapter transitions  
-- ❌ `@page chapter-opener { @top-center: none; }` — blank pages at every chapter transition
-- ❌ `.cover-page { break-after: page; }` when also using `min-height: 100vh`
-- ❌ Any `@page` named rule with `content: ""` or `content: none`
-- ❌ Any `@page` named rule at all — even empty `@page xxx { }` triggers the bug
+### 症状
+封面四角是白色，背景渐变只覆盖到内容区域，页眉和页码显示在顶部/底部。
 
-## Verification
+### 根因
+有两个叠加的原因：
+1. **Playwright `page.pdf()` 的 `margin` 参数叠加了额外的白边** — 即使 CSS `@page` 已设置了 margins，Playwright 参数会再加一层，这层白边无法被 CSS 覆盖
+2. **CSS 负边距技巧在 PDF 中无效** — `margin: -22mm; padding: 22mm` 在屏幕上有效，但在 Chrome PDF 渲染中被裁剪
 
-After building a PDF, check pages 1-6 with PyMuPDF:
+### 修复
 
 ```python
-import fitz
-doc = fitz.open("output.pdf")
-for i in range(min(6, doc.page_count)):
-    lines = [l.strip() for l in doc[i].get_text().split("\n") if l.strip()]
-    meaningful = [l for l in lines if l not in ["BookTitle", str(i+1), f"{i+1}", ""]]
-    is_blank = len(meaningful) < 1
-    print(f"p{i+1}: {'⚠️ BLANK' if is_blank else '✅ OK'}")
+# 错误：额外叠加白色边框
+page.pdf(margin={"top": "22mm", "bottom": "22mm", ...})
+
+# 正确：CSS 全权控制
+page.pdf(margin={"top": "0mm", "bottom": "0mm", "left": "0mm", "right": "0mm"})
 ```
 
-Expected: p1=Cover, p2=Copyright, p3=TOC, p4+=Content — no blank pages.
+### 验证结果
+
+三本书全部通过（2026-05-18）：
+
+| 书名 | 页数 | 空白页 | 封面全幅 | 封底全幅 | 封面图 | 封底图 |
+|------|------|--------|---------|---------|-------|-------|
+| AI领导者之路：从执行到决策 | 115 | 0 | ✅ | ✅ | 1 | 2 |
+| 高管的第一本决策书 | 216 | 0 | ✅ | ✅ | 1 | 2 |
+| 知识飞轮 | 94 | 0 | ✅ | ✅ | 1 | 2 |
+
+## 关键代码位置
+
+- `press-typeset.py` 的 `generate_css()` 函数中生成 `@page cover` 规则
+- `press-typeset.py` 的 `generate_pdf()` 函数中 `page.pdf(margin=...)` 调用
+- `press-typeset.py` 的 CSS 中 `.cover-page`, `.copyright-page`, `.back-cover` 的 `page: cover` 声明
+
+## 相关文件
+
+- `references/chrome-print-cjk.md` — CJK 排版相关
+- `scripts/press-typeset.py` — 排版引擎
