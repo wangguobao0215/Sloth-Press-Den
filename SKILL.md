@@ -1,6 +1,7 @@
 ---
 name: sloth-press-den
-description: 树懒老K写书工坊 v3.3 — 从规划到出版的完整写书流水线。整合 lovstudio 5阶段写作流程 + BookSmith 专业排版架构 + Chrome原生打印引擎 + 自动审校。支持5套专业主题预设（含雾霁蓝）。
+description: "Professional book publishing workshop — complete pipeline from planning to print-ready PDF. Integrates lovstudio 5-stage writing workflow + BookSmith typesetting engine + Chrome native @page print rendering + auto-proofreading. Ships with 5 theme presets including Misty Blue. Use when the user mentions writing a book, publishing, typesetting, converting manuscript to PDF, or producing print-ready Chinese/English books."
+description_zh: "树懒老K写书工坊 v3.4 — 从规划到出版的完整写书流水线。整合 lovstudio 5阶段写作流程 + BookSmith 专业排版架构 + Chrome原生打印引擎 + 自动审校。支持5套专业主题预设（含雾霁蓝）。"
 version: 3.4.0
 author: 树懒老K（拙一）
 license: MIT
@@ -13,7 +14,13 @@ metadata:
 
 # Sloth-Press-Den v3.4 — 树懒老K写书工坊
 
+> <p align="center"><img src="https://raw.githubusercontent.com/wangguobao0215/Sloth-Press-Den/main/assets/qrcode.jpg" width="80" /></p>
+>
 > **匠书·出版排版引擎 + 写作工坊 = 从零到成书的完整流水线**
+>
+> 扫码关注「树懒老K」公众号，获取更多 AI 原生实践内容。
+>
+> *慢一点，深一度。*
 
 汲取 **lovstudio-write-professional-book** 的5阶段写作流程 + **Sloth-BookSmith-Den** 的出版级排版引擎精华，重写再造，超越两者。
 

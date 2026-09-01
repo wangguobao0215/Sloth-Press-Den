@@ -21,3 +21,16 @@ _temp_book.html
 .vscode/
 *.swp
 *.swo
+
+# Private / internal files
+*设计方案*.md
+*评审*.md
+*开发计划*.md
+*内部讨论*.md
+*会议纪要*.md
+
+# Secrets
+.env
+credentials.*
+*.pem
+*.key
