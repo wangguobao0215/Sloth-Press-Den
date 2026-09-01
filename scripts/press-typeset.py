@@ -102,6 +102,16 @@ def parse_markdown_structure(md_text):
     current_content = []
     in_code_block = False
 
+    # All known book section prefixes (for startswith matching)
+    KNOWN_SECTIONS = (
+        '前言', '序言', '绪论', '导论', '引言', '自序', '序', '写在前面',
+        '尾声', '后记', '跋',
+        '献辞', '题辞', '献词',
+        '凡例', '阅读指南', '使用说明',
+        '参考文献', '参考书目',
+        '附录', '附',
+    )
+
     for line in lines:
         # Track code blocks (``` fences)
         if line.strip().startswith('```'):
@@ -111,19 +121,20 @@ def parse_markdown_structure(md_text):
         
         # Only process headings outside code blocks
         if not in_code_block and line.startswith('# '):
-            if current_chapter is not None:
-                current_chapter['content'] = '\n'.join(current_content)
-                current_chapter['sub_chapters'] = _extract_sub_chapters(current_content, len(chapters))
-                chapters.append(current_chapter)
-            
             title = line[2:].strip()
-            # Skip non-chapter headings (like code comment blocks that escaped)
-            # Only treat as chapter if starts with 第X章, 前言, 序, 附录, or is foreword
-            is_chapter = bool(re.match(r'^第[一二三四五六七八九十\d]', title))
-            is_preface = title in ('前言', '序言', '绪论', '导论', '引言', '自序', '序', '写在前面')
-            is_appendix = title.startswith('附录') or title.startswith('附')
             
-            if is_chapter or is_preface or is_appendix:
+            # Determine if this is a chapter/section boundary
+            is_chapter = bool(re.match(r'^第[\d一二三四五六七八九十百]+章', title))
+            is_section = any(title == s or title.startswith(s + ' ') or title.startswith(s + '\u3000') for s in KNOWN_SECTIONS)
+            
+            if is_chapter or is_section:
+                # Save previous chapter if any
+                if current_chapter is not None:
+                    current_chapter['content'] = '\n'.join(current_content)
+                    current_chapter['sub_chapters'] = _extract_sub_chapters(current_content, len(chapters))
+                    chapters.append(current_chapter)
+                
+                # Start new chapter
                 current_chapter = {
                     'title': title,
                     'content': '',
@@ -132,22 +143,24 @@ def parse_markdown_structure(md_text):
                 }
                 current_content = []
             else:
-                # Not a real chapter heading, treat as content
+                # Not a recognized chapter/section heading — treat as content
                 current_content.append(line)
-        else:
-            # Epigraph detection (only for first blockquote after chapter starts)
-            if not in_code_block and current_chapter is not None and current_chapter['epigraph'] is None:
-                stripped = line.lstrip('>').strip()
-                if line.startswith('> ') and ('--' in stripped or '\u2014' in stripped):
-                    parts = re.split(r'\s*[-\u2013\u2014]{2,}\s*', stripped, maxsplit=1)
-                    if len(parts) == 2:
-                        current_chapter['epigraph'] = {
-                            'text': parts[0].strip().strip('"').strip("'").strip(),
-                            'source': parts[1].strip()
-                        }
-                        continue
-            current_content.append(line)
+            continue  # Always continue after H1 processing
+        
+        # Non-H1 lines: epigraph detection and content accumulation
+        if not in_code_block and current_chapter is not None and current_chapter['epigraph'] is None:
+            stripped = line.lstrip('>').strip()
+            if line.startswith('> ') and ('--' in stripped or '\u2014' in stripped):
+                parts = re.split(r'\s*[-\u2013\u2014]{2,}\s*', stripped, maxsplit=1)
+                if len(parts) == 2:
+                    current_chapter['epigraph'] = {
+                        'text': parts[0].strip().strip('"').strip("'").strip(),
+                        'source': parts[1].strip()
+                    }
+                    continue
+        current_content.append(line)
 
+    # Don't forget the last chapter
     if current_chapter is not None:
         current_chapter['content'] = '\n'.join(current_content)
         current_chapter['sub_chapters'] = _extract_sub_chapters(current_content, len(chapters))
@@ -472,7 +485,7 @@ def generate_toc_html(chapters, config):
     colors = config['colors']
     fonts = config['fonts']
     
-    preface_titles = ('前言', '序言', '绪论', '导论', '引言', '自序', '序', '写在前面')
+    preface_titles = ('前言', '序言', '绪论', '导论', '引言', '自序', '序', '写在前面', '尾声', '后记', '献辞', '题辞', '凡例', '阅读指南', '参考文献')
     
     items = []
     chapter_items = []
@@ -1416,39 +1429,67 @@ def add_bookmarks(pdf_path, chapters, config):
 
     try:
         doc = fitz.open(pdf_path)
-        toc = []
         
+        # Find the TOC page (contains '目 录' or '目 录' heading)
+        # Bookmarks should start searching AFTER the TOC page
+        toc_page = -1
+        for page_num in range(min(10, doc.page_count)):
+            page = doc[page_num]
+            text = page.get_text()
+            if '目 录' in text or '目  录' in text or '目\n录' in text:
+                toc_page = page_num
+                break
+        
+        # Start searching from the page after TOC (or after cover+copyright if no TOC found)
+        search_start = toc_page + 1 if toc_page >= 0 else 2
+        
+        toc = []
+        min_page = search_start  # Track minimum page to search from
+
         for i, ch in enumerate(chapters):
-            marker = f'ch-body-{i}'
+            title = ch['title']
+            search_title = re.sub(r'[#*_`]', '', title).strip()
+
+            # Search for the chapter title text starting from min_page
             found_page = None
-            
-            # Search for marker in each page
-            for page_num in range(doc.page_count):
-                page = doc[page_num]
-                text = page.get_text()
-                if marker in text:
-                    found_page = page_num + 1  # 1-indexed
-                    break
-            
+            if search_title:
+                # Normalize: remove line breaks and smart quotes that PDF inserts
+                norm_title = search_title.replace('\u201c', '"').replace('\u201d', '"').replace('\u2018', "'").replace('\u2019', "'")
+                for page_num in range(min_page, doc.page_count):
+                    page = doc[page_num]
+                    raw_text = page.get_text()
+                    # Remove newlines so multi-line PDF text can match
+                    text = raw_text.replace('\n', '')
+                    text = text.replace('\u201c', '"').replace('\u201d', '"').replace('\u2018', "'").replace('\u2019', "'")
+                    if norm_title[:20] in text:
+                        found_page = page_num + 1  # 1-indexed
+                        min_page = page_num  # Next chapter must be on same or later page
+                        break
+
             if found_page is None:
-                found_page = 1
-            
-            toc.append([1, ch['title'], found_page])
-            
+                found_page = min_page + 1 if min_page + 1 <= doc.page_count else search_start + 1
+
+            toc.append([1, title, found_page])
+
             # Add sub-chapters as level-2 bookmarks
             for sub in ch.get('sub_chapters', []):
-                sub_marker = f'§TOC{i}-'
+                sub_title = re.sub(r'[#*_`]', '', sub['title']).strip()
                 sub_page = None
-                for page_num in range(doc.page_count):
-                    page = doc[page_num]
-                    text = page.get_text()
-                    if sub_marker in text and sub['anchor'] in text:
-                        sub_page = page_num + 1
-                        break
+                if sub_title:
+                    norm_sub = sub_title.replace('\u201c', '"').replace('\u201d', '"').replace('\u2018', "'").replace('\u2019', "'")
+                    for page_num in range(min_page, doc.page_count):
+                        page = doc[page_num]
+                        raw_text = page.get_text()
+                        text = raw_text.replace('\n', '')
+                        text = text.replace('\u201c', '"').replace('\u201d', '"').replace('\u2018', "'").replace('\u2019', "'")
+                        if norm_sub[:20] in text:
+                            sub_page = page_num + 1
+                            min_page = page_num  # Advance min_page to prevent backward jumps
+                            break
                 if sub_page is None:
                     sub_page = found_page
-                toc.append([2, sub['title'], sub_page])
-        
+                toc.append([2, sub_title, sub_page])
+
         doc.set_toc(toc)
         doc.save(pdf_path, incremental=True, encryption=0)
         print(f"  PDF bookmarks added ({len(chapters)} chapters)")
