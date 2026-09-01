@@ -2,7 +2,7 @@
   <img src="assets/sloth-avatar-round.png" width="120" />
 </p>
 
-<h1 align="center">Sloth-Press-Den — Professional Book Publishing Workshop</h1>
+<h1 align="center">Sloth-Press-Den — 深印 · 写书工坊</h1>
 
 <p align="center">
   Complete pipeline from planning to print-ready PDF — Writing Engine × Typesetting Engine × Proofreading Engine.

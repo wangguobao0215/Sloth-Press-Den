@@ -2,7 +2,7 @@
   <img src="assets/sloth-avatar-round.png" width="120" />
 </p>
 
-<h1 align="center">Sloth-Press-Den — 树懒老K写书工坊</h1>
+<h1 align="center">Sloth-Press-Den — 深印 · 写书工坊</h1>
 
 <p align="center">
   从规划到出版的完整写书流水线 — 写作引擎 × 排版引擎 × 审校引擎，一站式成书。
@@ -17,7 +17,7 @@
 
 ## 品名释义
 
-**Sloth-Press-Den**（树懒老K写书工坊）— "Press" 取出版印刷之意，"Den" 是工坊、小窝。树懒写书，不赶工，求深入——每一本都是匠书。
+**深印 · 写书工坊**（Sloth-Press-Den）— "深" 承品牌哲学"慢一点，深一度"；"印" 取出版印刷之意，亦指深度印记。"Press" 即出版印刷，"Den" 是工坊、小窝。树懒写书，不赶工，求深入——每一本都是匠书。
 
 ## 功能概览
 
