@@ -1519,7 +1519,7 @@ def generate_pdf(input_md, output_pdf, config):
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(channel="chrome")
         page = browser.new_page()
         
         # Write HTML to temp file and load via goto(), NOT set_content().

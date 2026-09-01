@@ -852,7 +852,7 @@ date: 2026-05-17
 - ❌ **PDF构建时注意Python环境** → Hermes venv的python3可能缺少playwright/chromium。构建PDF前先检查：`which python3 && python3 -c "import playwright"`。如果失败，用 `/usr/bin/python3` 替代——系统Python通常预装了playwright和chromium。同理，检查qrcode模块是否存在
 - ❌ **子agent 写章节时只输出 `## X.1` 格式** → 解析器需要 `# 第X章 标题` 作为章节边界。写完后必须在每个 section-01.md 开头插入 `# 第X章 标题`
 - ❌ **不要在子agent任务中使用老旧的 `search_files` 工具调用** → execute_code 内的 read_file 工具返回格式可能变化，优先在终端中运行 Python 脚本
-- ❌ **press-typeset.py 的 Python 环境问题** → Hermes venv 的 python3 (3.11.15) 可能缺少 playwright/qrcode。如果遇到 `ModuleNotFoundError: No module named 'playwright'`，先尝试 `/usr/bin/python3`（系统Python），再尝试 `pip3 install playwright qrcode -i https://pypi.tuna.tsinghua.edu.cn/simple`。如果 Chromium 不存在（`Executable doesn't exist at ...`），需运行 `playwright install chromium`（下载约20分钟）
+- ❌ **press-typeset.py 的 Python 环境问题** → Hermes venv 的 python3 (3.11.15) 可能缺少 playwright/qrcode。如果遇到 `ModuleNotFoundError: No module named 'playwright'`，先尝试 `/usr/bin/python3`（系统Python），再尝试 `pip3 install playwright qrcode -i https://pypi.tuna.tsinghua.edu.cn/simple`。如果 Chromium 不存在（`Executable doesn't exist at ...`），**优先用系统 Chrome**：`p.chromium.launch(channel="chrome")`（macOS 装 Google Chrome 即可，零下载），而不是 `playwright install chromium`（下载约20分钟）。已内置为默认（v3.4.1+）
 - ✅ 5 Phase 流程已通过真实项目验证从0到PDF的全链路（executive-agent-book）
 - ✅ 流程验证要点：Phase 1 初始化→写OUTLINE→Phase 2 搜索参考文献→Phase 3 出大纲确认后写→Phase 4 审校→Phase 5 构建输出
 
