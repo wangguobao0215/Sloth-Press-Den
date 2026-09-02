@@ -198,7 +198,7 @@ def convert_md_to_html(md_text):
     return md.convert(md_text)
 
 
-def process_body_html(html, chapter_index=0, output_dir=None):
+def process_body_html(html, chapter_index=0, appendix_letter=None, output_dir=None):
     """Post-process HTML: figure/table numbering, sidebars, footnotes, cross-references."""
     # ── Cross-reference detection: 参见/参阅/参考/见 第X章 → clickable links
     def replace_crossref(m):
@@ -233,12 +233,18 @@ def process_body_html(html, chapter_index=0, output_dir=None):
         cap_match = re.search(r'<em>([^<]*)</em>', tag)
         caption = cap_match.group(1).strip().strip('—').strip('-').strip() if cap_match else ''
         cap_text = caption if caption else alt
+        # 去掉图注文字开头自带的"图N-M"（自动编号已提供，避免双重图号）
+        cap_text = re.sub(r'^\s*图\s*\d+-\d+\s*', '', cap_text)
+        label = appendix_letter if appendix_letter else chapter_index
         return (
             f'<figure><img src="{src}" alt="{alt}" style="max-height:140mm;width:auto;height:auto;"/>'
-            f'<figcaption>\u56fe {chapter_index + 1}-{fig_counter}  {cap_text}</figcaption></figure>'
+            f'<figcaption>\u56fe {label}-{fig_counter}  {cap_text}</figcaption></figure>'
         )
-    # Match <p> containing <img> (possibly followed by <em> caption)
-    html = re.sub(r'<p>\s*(<img[^>]+/>)\s*(?:<em>([^<]*)</em>)?\s*</p>', replace_img_figure, html)
+    # Match <p> containing <img> (possibly followed by <em> caption in same or next <p>)
+    html = re.sub(
+        r'<p>\s*(<img[^>]+/>)\s*</p>\s*(?:<p>\s*<em>([^<]*)</em>\s*</p>)?',
+        replace_img_figure, html
+    )
 
     # ── Table numbering ──
     table_counter = 0
@@ -246,9 +252,10 @@ def process_body_html(html, chapter_index=0, output_dir=None):
         nonlocal table_counter
         table_counter += 1
         table_html = m.group(0)
+        label = appendix_letter if appendix_letter else chapter_index
         return (
             f'<div class="table-wrapper">'
-            f'<div class="table-caption">\u8868 {chapter_index + 1}-{table_counter}</div>'
+            f'<div class="table-caption">\u8868 {label}-{table_counter}</div>'
             f'{table_html}</div>'
         )
     html = re.sub(r'<table>.*?</table>', replace_table, html, flags=re.DOTALL)
@@ -566,7 +573,12 @@ def generate_body_html(chapters, config, output_dir="."):
             marked_lines.append(line)
 
         chapter_html = convert_md_to_html('\n'.join(marked_lines))
-        chapter_html = process_body_html(chapter_html, chapter_index=i, output_dir=output_dir)
+        title = chapters[i].get('title', '')
+        appendix_letter = None
+        am = re.match(r'^附录([ABCDEF])', title)
+        if am:
+            appendix_letter = am.group(1)
+        chapter_html = process_body_html(chapter_html, chapter_index=i, appendix_letter=appendix_letter, output_dir=output_dir)
 
         clean = re.sub(r'<div class="page-break"></div>', '', chapter_html)
         clean = re.sub(r'\s', '', clean)

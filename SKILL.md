@@ -852,6 +852,7 @@ date: 2026-05-17
 - ❌ **PDF构建时注意Python环境** → Hermes venv的python3可能缺少playwright/chromium。构建PDF前先检查：`which python3 && python3 -c "import playwright"`。如果失败，用 `/usr/bin/python3` 替代——系统Python通常预装了playwright和chromium。同理，检查qrcode模块是否存在
 - ❌ **子agent 写章节时只输出 `## X.1` 格式** → 解析器需要 `# 第X章 标题` 作为章节边界。写完后必须在每个 section-01.md 开头插入 `# 第X章 标题`
 - ❌ **不要在子agent任务中使用老旧的 `search_files` 工具调用** → execute_code 内的 read_file 工具返回格式可能变化，优先在终端中运行 Python 脚本
+- ❌ **press-typeset.py 的图/表编号三个坑（v3.4.2修复）** → ①`chapter_index + 1` 会导致图/表章号偏移：chapters 列表含前言（index 0），第5章 index=5，+1 变6 → 图注显示"图 6-1"（应为图5-1）。直接用 `chapter_index`。②figcaption 自动编号与图注文字自带的"图N-M"双重图号：`cap_text` 需先 `re.sub(r'^\s*图\s*\d+-\d+\s*', '', cap_text)` 去前缀。③markdown 图片与斜体图注用空行分隔时（`![...]` 空行 `*图注*`）会被转成两个独立 `<p>`，figure 正则吃不到 `<em>`，导致图注重复显示在 figure 外——正则需扩展为 `r'<p>\s*(<img[^>]+/>)\s*</p>\s*(?:<p>\s*<em>([^<]*)</em>\s*</p>)?'`。④附录章节的表格编号需用字母（表 A-1）而非数字索引：`process_body_html` 传 `appendix_letter`，从标题 `^附录([ABCDEF])` 提取
 - ❌ **press-typeset.py 的 Python 环境问题** → Hermes venv 的 python3 (3.11.15) 可能缺少 playwright/qrcode。如果遇到 `ModuleNotFoundError: No module named 'playwright'`，先尝试 `/usr/bin/python3`（系统Python），再尝试 `pip3 install playwright qrcode -i https://pypi.tuna.tsinghua.edu.cn/simple`。如果 Chromium 不存在（`Executable doesn't exist at ...`），**优先用系统 Chrome**：`p.chromium.launch(channel="chrome")`（macOS 装 Google Chrome 即可，零下载），而不是 `playwright install chromium`（下载约20分钟）。已内置为默认（v3.4.1+）
 - ✅ 5 Phase 流程已通过真实项目验证从0到PDF的全链路（executive-agent-book）
 - ✅ 流程验证要点：Phase 1 初始化→写OUTLINE→Phase 2 搜索参考文献→Phase 3 出大纲确认后写→Phase 4 审校→Phase 5 构建输出
