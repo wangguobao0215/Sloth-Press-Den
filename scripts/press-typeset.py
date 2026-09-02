@@ -309,6 +309,8 @@ def generate_cover_html(config, output_dir="."):
     cover_style = config.get('cover_style', 'gradient')
     
     subtitle_html = f'<p class="cover-subtitle">{subtitle}</p>' if subtitle else ''
+    slogan = escape(config.get('slogan', ''))
+    slogan_html = f'<p class="cover-slogan">{slogan}</p>' if slogan else ''
     author_html = f'<p class="cover-author">{author}</p>' if author else ''
     
     # Brand logo (transparent) — centered
@@ -343,12 +345,13 @@ def generate_cover_html(config, output_dir="."):
     {logo_html}
     <h1 class="cover-title">{title}</h1>
     {subtitle_html}
+    {slogan_html}
     <div class="cover-ornament"></div>
     {author_html}
   </div>
   {qr_row}
 </section>'''
-    
+
     elif cover_style == 'academic':
         bg = f'background: {colors["cover_gradient_end"]};'
         return f'''<section class="cover-page">
@@ -356,12 +359,13 @@ def generate_cover_html(config, output_dir="."):
   <div style="width: 60px; height: 3px; background: {colors['cover_accent']}; margin: 0 auto 2em;"></div>
   <h1 class="cover-title" style="font-size: {sizes['cover_title'] - 4}pt;">{title}</h1>
   {subtitle_html}
+  {slogan_html}
   {logo_html}
   <div style="width: 40px; height: 1px; background: {colors['cover_accent']}; opacity: 0.4; margin: 2em auto;"></div>
   {author_html}
   {qr_row}
 </section>'''
-    
+
     else:
         # gradient (default) — logo centered, three QR codes at bottom
         og = f"background: linear-gradient(135deg, {colors['cover_gradient_start']} 0%, {colors['cover_gradient_end']} 100%);"
@@ -371,6 +375,7 @@ def generate_cover_html(config, output_dir="."):
     {logo_html}
     <h1 class="cover-title">{title}</h1>
     {subtitle_html}
+    {slogan_html}
     <div class="cover-ornament"></div>
     {author_html}
   </div>
@@ -753,6 +758,16 @@ body {{
     font-weight: 400;
     margin-bottom: 1.8em;
     line-height: 1.5;
+}}
+
+.cover-slogan {{
+    font-size: 11pt;
+    color: {colors['cover_accent']};
+    opacity: 0.75;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.2em;
+    font-style: italic;
 }}
 
 .cover-ornament {{
@@ -1762,6 +1777,7 @@ def main():
     parser.add_argument("--title", help="Book title (overrides frontmatter)")
     parser.add_argument("--author", help="Book author (overrides frontmatter)")
     parser.add_argument("--subtitle", help="Book subtitle (overrides frontmatter)")
+    parser.add_argument("--slogan", help="Cover slogan line (optional, e.g. '让机器读懂业务，让AI不再胡说')")
     parser.add_argument("--watermark", help="Watermark text")
     parser.add_argument("--cover-style", default="gradient", choices=["gradient", "solid", "academic"],
                         help="Cover page style")
@@ -1781,6 +1797,8 @@ def main():
         config['author'] = args.author
     if args.subtitle:
         config['subtitle'] = args.subtitle
+    if args.slogan:
+        config['slogan'] = args.slogan
     if args.watermark:
         config['watermark'] = args.watermark
     if args.cover_style:
