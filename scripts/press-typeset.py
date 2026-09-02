@@ -126,6 +126,9 @@ def parse_markdown_structure(md_text):
             # Determine if this is a chapter/section boundary
             is_chapter = bool(re.match(r'^第[\d一二三四五六七八九十百]+章', title))
             is_section = any(title == s or title.startswith(s + ' ') or title.startswith(s + '\u3000') for s in KNOWN_SECTIONS)
+            # 附录A/B/C...（附录后直接跟编号字母/数字/中文数字）也应识别为章节边界
+            if not is_section and re.match(r'^附录[ABCDEF\d一二三四五六七八九十]', title):
+                is_section = True
             
             if is_chapter or is_section:
                 # Save previous chapter if any
